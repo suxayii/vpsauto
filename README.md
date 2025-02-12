@@ -25,4 +25,4 @@
 2. 下载脚本：
 
    ```bash
-   bash <(curl -Ls https://raw.githubusercontent.com/suxayii/vpsauto/refs/heads/master/Throttle.sh)
+   bash <(curl -Ls https://raw.githubusercontent.com/suxayii/vpsauto/refs/heads/master/hy2.sh)
