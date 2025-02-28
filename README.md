@@ -26,3 +26,6 @@
 
    ```bash
    bash <(curl -Ls https://raw.githubusercontent.com/suxayii/vpsauto/refs/heads/master/hy2.sh)
+
+
+   sudo ufw allow 30245/tcp
