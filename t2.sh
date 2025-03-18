@@ -3,6 +3,12 @@
 # 固定网卡名称
 INTERFACE="eth0"
 
+# 检查网络接口是否存在
+if ! ip link show $INTERFACE &> /dev/null; then
+    echo "错误：网络接口 $INTERFACE 不存在，请检查接口名称。"
+    exit 1
+fi
+
 # 检查并安装必要的软件包
 check_dependency() {
     local cmd=$1
@@ -64,9 +70,15 @@ set_tc_iptables_limit() {
     local RATE=$3
     local CEIL=$4
 
+    # 查看当前队列规则
+    echo "当前网络接口 $INTERFACE 的队列规则："
+    sudo tc -s qdisc show dev $INTERFACE
+
     # 清除已有的队列规则
     if ! sudo tc qdisc del dev $INTERFACE root 2>/dev/null; then
         echo "清除已有队列规则时出现错误。"
+        # 输出详细错误信息
+        sudo tc qdisc del dev $INTERFACE root
     fi
     if ! sudo iptables -t mangle -F; then
         echo "清除 iptables mangle 表规则时出现错误。"
@@ -234,6 +246,8 @@ elif [ "$CHOICE" -eq 2 ]; then
         # 清除所有规则
         if ! sudo tc qdisc del dev $INTERFACE root 2>/dev/null; then
             echo "清除已有队列规则时出现错误。"
+            # 输出详细错误信息
+            sudo tc qdisc del dev $INTERFACE root
         fi
         if ! sudo iptables -t mangle -F; then
             echo "清除 iptables mangle 表规则时出现错误。"
