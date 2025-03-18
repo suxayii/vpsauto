@@ -103,8 +103,12 @@ elif [ "$CHOICE" -eq 2 ]; then
 
     elif [ "$CLEAR_CHOICE" -eq 2 ]; then
         # 清除指定端口规则
-        echo "当前限速端口："
-        iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | awk '{print $13}' | sort -u
+        PORT_LIST=$(iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt|spt" | sed 's/.*dpt://;s/.*spt://;s/ .*//' | sort -u)
+        if [ -z "$PORT_LIST" ]; then
+            echo "未找到限速端口。"
+        else
+            echo "当前限速端口：$PORT_LIST"
+        fi
         read -p "请输入要解除限速的端口(用逗号分隔): " REMOVE_PORTS
 
         IFS=',' read -ra REMOVE_PORT_ARRAY <<< "$REMOVE_PORTS"
@@ -136,7 +140,7 @@ elif [ "$CHOICE" -eq 3 ]; then
     fi
 
     echo "限速端口:"
-    PORT_LIST=$(iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt|spt" | sed 's/.*dpt://;s/.*spt://;s/ .*//' | sort -u)
+    PORT_LIST=$(iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt|spt" | sed -E 's/.*(dpt|spt):([0-9]+).*/\2/' | sort -u)
     if [ -z "$PORT_LIST" ]; then
         echo "未找到限速端口。"
     else
