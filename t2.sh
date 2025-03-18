@@ -23,6 +23,7 @@ fi
 
 # 固定 MARK 值
 MARK=10
+echo "当前使用的 MARK 值: $MARK"
 
 # 日志记录
 LOG_FILE="/var/log/traffic-shaping.log"
@@ -244,7 +245,7 @@ elif [ "$CHOICE" -eq 2 ]; then
 
     elif [ "$CLEAR_CHOICE" -eq 2 ]; then
         # 清除指定端口规则
-        PORT_LIST=$(iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt|spt" | sed -E 's/.*(dpt|spt):([0-9]+).*/\2/' | sort -u)
+        PORT_LIST=$(sudo iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt" | sed -E 's/.*dpt:([0-9]+).*/\1/' | sort -u)
         if [ -z "$PORT_LIST" ]; then
             echo "未找到限速端口。"
         else
@@ -294,7 +295,7 @@ elif [ "$CHOICE" -eq 3 ]; then
     fi
 
     echo "限速端口:"
-    PORT_LIST=$(iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt|spt" | sed -E 's/.*(dpt|spt):([0-9]+).*/\2/' | sort -u)
+    PORT_LIST=$(sudo iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt" | sed -E 's/.*dpt:([0-9]+).*/\1/' | sort -u)
     if [ -z "$PORT_LIST" ]; then
         echo "未找到限速端口。"
     else
