@@ -75,10 +75,14 @@ set_tc_iptables_limit() {
     sudo tc -s qdisc show dev $INTERFACE
 
     # 清除已有的队列规则
-    if ! sudo tc qdisc del dev $INTERFACE root 2>/dev/null; then
-        echo "清除已有队列规则时出现错误。"
-        # 输出详细错误信息
-        sudo tc qdisc del dev $INTERFACE root
+    if sudo tc -s qdisc show dev $INTERFACE | grep -q "qdisc fq 0:"; then
+        echo "检测到默认队列规则（句柄为 0），跳过删除操作。"
+    else
+        if ! sudo tc qdisc del dev $INTERFACE root 2>/dev/null; then
+            echo "清除已有队列规则时出现错误。"
+            # 输出详细错误信息
+            sudo tc qdisc del dev $INTERFACE root
+        fi
     fi
     if ! sudo iptables -t mangle -F; then
         echo "清除 iptables mangle 表规则时出现错误。"
@@ -244,10 +248,14 @@ elif [ "$CHOICE" -eq 2 ]; then
 
     if [ "$CLEAR_CHOICE" -eq 1 ]; then
         # 清除所有规则
-        if ! sudo tc qdisc del dev $INTERFACE root 2>/dev/null; then
-            echo "清除已有队列规则时出现错误。"
-            # 输出详细错误信息
-            sudo tc qdisc del dev $INTERFACE root
+        if sudo tc -s qdisc show dev $INTERFACE | grep -q "qdisc fq 0:"; then
+            echo "检测到默认队列规则（句柄为 0），跳过删除操作。"
+        else
+            if ! sudo tc qdisc del dev $INTERFACE root 2>/dev/null; then
+                echo "清除已有队列规则时出现错误。"
+                # 输出详细错误信息
+                sudo tc qdisc del dev $INTERFACE root
+            fi
         fi
         if ! sudo iptables -t mangle -F; then
             echo "清除 iptables mangle 表规则时出现错误。"
@@ -259,6 +267,10 @@ elif [ "$CHOICE" -eq 2 ]; then
 
     elif [ "$CLEAR_CHOICE" -eq 2 ]; then
         # 清除指定端口规则
+        # 查看当前 iptables 规则
+        echo "当前 iptables mangle 表 PREROUTING 链规则："
+        sudo iptables -t mangle -L PREROUTING -v -n
+
         PORT_LIST=$(sudo iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt" | sed -E 's/.*dpt:([0-9]+).*/\1/' | sort -u)
         if [ -z "$PORT_LIST" ]; then
             echo "未找到限速端口。"
@@ -308,12 +320,15 @@ elif [ "$CHOICE" -eq 3 ]; then
         echo "没有找到有效的限速配置文件。"
     fi
 
-    echo "限速端口:"
+    # 查看当前 iptables 规则
+    echo "当前 iptables mangle 表 PREROUTING 链规则："
+    sudo iptables -t mangle -L PREROUTING -v -n
+
     PORT_LIST=$(sudo iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt" | sed -E 's/.*dpt:([0-9]+).*/\1/' | sort -u)
     if [ -z "$PORT_LIST" ]; then
         echo "未找到限速端口。"
     else
-        echo "$PORT_LIST"
+        echo "当前限速端口：$PORT_LIST"
     fi
 
 else
