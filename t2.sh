@@ -136,7 +136,12 @@ elif [ "$CHOICE" -eq 3 ]; then
     fi
 
     echo "限速端口:"
-    iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | awk '{print $13}' | sort -u
+    PORT_LIST=$(iptables -t mangle -L PREROUTING -v -n | grep "MARK set 0x$MARK" | grep -E "dpt|spt" | sed 's/.*dpt://;s/.*spt://;s/ .*//' | sort -u)
+    if [ -z "$PORT_LIST" ]; then
+        echo "未找到限速端口。"
+    else
+        echo "$PORT_LIST"
+    fi
 
 else
     echo "无效选项，请输入 1、2 或 3"
